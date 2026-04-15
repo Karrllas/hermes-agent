@@ -118,6 +118,21 @@ def skill_matches_platform(frontmatter: Dict[str, Any]) -> bool:
 # ── Disabled skills ───────────────────────────────────────────────────────
 
 
+class _InvertedSet:
+    """A pseudo-set whose __contains__ matches anything NOT in the allowed set.
+
+    Used for whitelist mode: get_disabled_skill_names() returns one of these
+    when skills.enabled is configured, so prompt_builder's existing
+    ``if name in disabled`` checks work without any modification.
+    """
+
+    def __init__(self, allowed: Set[str]):
+        self._allowed = allowed
+
+    def __contains__(self, item: object) -> bool:
+        return item not in self._allowed
+
+
 def get_disabled_skill_names(platform: str | None = None) -> Set[str]:
     """Read disabled skill names from config.yaml.
 
@@ -129,6 +144,11 @@ def get_disabled_skill_names(platform: str | None = None) -> Set[str]:
 
     Reads the config file directly (no CLI config imports) to stay
     lightweight.
+
+    When ``skills.enabled`` is set (non-empty list), returns an
+    ``_InvertedSet`` so only whitelisted skills appear in the prompt index.
+    New upstream skills are excluded automatically until added to the list.
+    Falls back to blacklist (``skills.disabled``) when no whitelist is set.
     """
     config_path = get_config_path()
     if not config_path.exists():
@@ -151,10 +171,19 @@ def get_disabled_skill_names(platform: str | None = None) -> Set[str]:
         or os.getenv("HERMES_PLATFORM")
         or get_session_env("HERMES_SESSION_PLATFORM")
     )
+
+    # Whitelist mode: skills.enabled (or platform_enabled) takes priority
     if resolved_platform:
-        platform_disabled = (skills_cfg.get("platform_disabled") or {}).get(
-            resolved_platform
-        )
+        platform_enabled = (skills_cfg.get("platform_enabled") or {}).get(resolved_platform)
+        if platform_enabled is not None:
+            return _InvertedSet(_normalize_string_set(platform_enabled))
+    enabled = _normalize_string_set(skills_cfg.get("enabled"))
+    if enabled:
+        return _InvertedSet(enabled)
+
+    # Blacklist mode (default): skills.disabled
+    if resolved_platform:
+        platform_disabled = (skills_cfg.get("platform_disabled") or {}).get(resolved_platform)
         if platform_disabled is not None:
             return _normalize_string_set(platform_disabled)
     return _normalize_string_set(skills_cfg.get("disabled"))
