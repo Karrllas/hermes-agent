@@ -6564,6 +6564,8 @@ class HermesCLI:
             return False
         elif canonical == "help":
             self.show_help()
+        elif canonical == "preview":
+            self._handle_preview_command(cmd_original)
         elif canonical == "profile":
             self._handle_profile_command()
         elif canonical == "tools":
@@ -6961,7 +6963,118 @@ class HermesCLI:
                     _cprint(f"{_DIM}{_ACCENT}Type /help for available commands{_RST}")
         
         return True
-    
+
+    def _handle_preview_command(self, cmd: str):
+        """Handle /preview [next user message] — show the exact provider payload."""
+        parts = cmd.strip().split(maxsplit=1)
+        preview_user_message = parts[1] if len(parts) > 1 else ""
+
+        route = self._resolve_turn_agent_config(preview_user_message or "")
+        if not self._init_agent(
+            model_override=route["model"],
+            runtime_override=route["runtime"],
+            route_label=route["label"],
+            request_overrides=route.get("request_overrides"),
+        ):
+            return
+
+        if not self.agent:
+            ChatConsole().print("[bold red]No active agent available for preview[/]")
+            return
+
+        try:
+            # Reuse the same system-prompt snapshot logic as a normal turn.
+            if self.agent._cached_system_prompt is None:
+                stored_prompt = None
+                if self.conversation_history and self._session_db:
+                    try:
+                        session_row = self._session_db.get_session(self.session_id)
+                        if session_row:
+                            stored_prompt = session_row.get("system_prompt") or None
+                    except Exception:
+                        pass
+
+                if stored_prompt:
+                    self.agent._cached_system_prompt = stored_prompt
+                else:
+                    self.agent._cached_system_prompt = self.agent._build_system_prompt(None)
+
+            messages = list(self.conversation_history or [])
+            if preview_user_message:
+                messages.append({"role": "user", "content": preview_user_message})
+
+            needs_sanitize = self.agent._should_sanitize_tool_calls()
+            api_messages = []
+            for msg in messages:
+                api_msg = msg.copy()
+                for internal_field in ("reasoning", "finish_reason", "_thinking_prefill"):
+                    api_msg.pop(internal_field, None)
+                if needs_sanitize:
+                    self.agent._sanitize_tool_calls_for_strict_api(api_msg)
+                api_messages.append(api_msg)
+
+            effective_system = self.agent._cached_system_prompt or ""
+            if self.agent.ephemeral_system_prompt:
+                effective_system = (effective_system + "\n\n" + self.agent.ephemeral_system_prompt).strip()
+            if effective_system:
+                api_messages = [{"role": "system", "content": effective_system}] + api_messages
+
+            if self.agent.prefill_messages:
+                sys_offset = 1 if effective_system else 0
+                for idx, pfm in enumerate(self.agent.prefill_messages):
+                    api_messages.insert(sys_offset + idx, pfm.copy())
+
+            api_kwargs = self.agent._build_api_kwargs(api_messages)
+
+            preview = {
+                "provider": getattr(self.agent, "provider", self.provider),
+                "api_mode": getattr(self.agent, "api_mode", self.api_mode),
+                "base_url": getattr(self.agent, "base_url", self.base_url),
+                "model": getattr(self.agent, "model", self.model),
+                "route_label": route.get("label"),
+                "preview_user_message_included": bool(preview_user_message),
+                "conversation_history_messages": len(self.conversation_history or []),
+                "request": api_kwargs,
+            }
+
+            preview_text = json.dumps(preview, indent=2, ensure_ascii=False)
+            tmp = Path(tempfile.gettempdir()) / "hermes_preview.json"
+            tmp.write_text(preview_text, encoding="utf-8")
+            ChatConsole().print(f"[bold {_accent_hex()}]Provider request preview[/]")
+            ChatConsole().print(f"[dim]Written to: {tmp}[/]")
+            if not preview_user_message:
+                ChatConsole().print(
+                    "[dim]Tip: use /preview <your next message> to simulate the exact next-turn payload, including that user message.[/]"
+                )
+        except Exception as e:
+            ChatConsole().print(f"[bold red]Preview failed: {e}[/]")
+
+    def _handle_plan_command(self, cmd: str):
+        """Handle /plan [request] — load the bundled plan skill."""
+        parts = cmd.strip().split(maxsplit=1)
+        user_instruction = parts[1].strip() if len(parts) > 1 else ""
+
+        plan_path = build_plan_path(user_instruction)
+        msg = build_skill_invocation_message(
+            "/plan",
+            user_instruction,
+            task_id=self.session_id,
+            runtime_note=(
+                "Save the markdown plan with write_file to this exact relative path "
+                f"inside the active workspace/backend cwd: {plan_path}"
+            ),
+        )
+
+        if not msg:
+            ChatConsole().print("[bold red]Failed to load the bundled /plan skill[/]")
+            return
+
+        _cprint(f"  📝 Plan mode queued via skill. Markdown plan target: {plan_path}")
+        if hasattr(self, '_pending_input'):
+            self._pending_input.put(msg)
+        else:
+            ChatConsole().print("[bold red]Plan mode unavailable: input queue not initialized[/]")
+
     def _handle_background_command(self, cmd: str):
         """Handle /background <prompt> — run a prompt in a separate background session.
 
