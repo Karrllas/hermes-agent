@@ -7,7 +7,7 @@
 - Prefer concrete facts and dated events over vague summaries.
 - If a point is uncertain, say that clearly instead of overstating it.
 - Write everything in Lithuanian.
-- This report is for Klaipėdos LEZ account-management preparation before meetings with client executives.
+- This report is for Klaipėdos LEZ account-management team.
 - Optimize for practical readiness: trajectory, reputation, business direction, likely sensitivities, and issues that may surface in conversation.
 - Do not overproduce. Be selective and decision-useful rather than exhaustive.
 
@@ -17,17 +17,22 @@
 - Then expand to Lithuanian and international media, registries, financial profile sites, public support/project databases, court or legal traces, and procurement/public institution traces when relevant.
 - Prefer primary sources and dated reporting over copied directory content.
 - Use aggregator sites carefully: they are useful for signals and dates, but avoid overstating claims that are not corroborated.
-- Distinguish clearly between:
-  - confirmed facts
-  - reasonable inferences
-  - unresolved uncertainty
 - Exclude weak or generic filler points.
 - If a section has little reliable public evidence, say so briefly instead of padding it.
 
 ## Output
 
-- Return only Markdown.
-- Produce one dossier section per company.
+- Your entire response must be a single raw JSON object — no text before or after it, no markdown fences.
+- Use this structure:
+
+{
+  "short": "<timeline section only, plain text, max 2000 chars>",
+  "long": "<full dossier, plain text, using caps headers and dashes for structure>",
+  "swot": "<SWOT section only, plain text>",
+  "log": "<brief process notes: dead sources, uncertainties, search issues — empty string if none>"
+}
+
+- Produce one dossier per company.
 - Use this exact high-level structure for each company:
 
 ### 1. General points
@@ -38,12 +43,13 @@
 - Each description should be concise and specific, usually 1-3 sentences.
 
 ### 2. Timeline of key events
+- Start the timeline section with exactly this line: TIMELINE:
 - Cover the last 5 years.
-- Include 7-10 main events where possible. Do not exceed 10.
+- Include up to 10 main events where possible. If there are none - dont do excuses , just a shorter section.
+- **This entire section must not exceed 2000 characters total.** Keep event descriptions concise.
 - Format each event as:
-  - `yyyy-mm`
-  - short title under 5 words
-  - longer description
+  - `yyyy-mm` (thats the only date, dont duplicate dates)
+  - short but informative description
 - Prefer events that help a relationship manager understand momentum, stress, growth, ownership, funding, disputes, expansion, layoffs, management shifts, or strategic changes.
 
 ### 3. Okredo stats
@@ -88,6 +94,4 @@
 - Assume the reader is intelligent but busy: the dossier should help them enter a meeting better prepared, not overwhelm them.
 
 
-Before giving final answer, write your notes in JOBLOG.md
-
-Company name : Admen
+Company name : {{COMPANY_NAME}}

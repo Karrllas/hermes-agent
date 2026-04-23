@@ -1,25 +1,37 @@
 [provider]: openai-codex
-[api_mode]: codex_responses
+[api_mode]: chat_completions
 [base_url]: https://chatgpt.com/backend-api/codex/
 [model]: gpt-5.4
 [route_label]: None
-[preview_user_message_included]: True
-[conversation_history_messages]: 0
+[preview_user_message_included]: False
+[conversation_history_messages]: 2
 
 === REQUEST ===
 
 [model]: gpt-5.4
 
---- instructions (213 chars) ---
-# Hermes Agent Persona
+--- messages (3 total) ---
 
-Conversation started: Wednesday, April 15, 2026 03:06 PM
-Model: gpt-5.4
-Provider: openai-codex
+  [developer] (601 chars)
+    # Hermes Agent Persona
+    
+    Conversation started: Thursday, April 23, 2026 01:25 PM
+    Model: gpt-5.4
+    Provider: openai-codex
+    
+    You are a CLI AI Agent. Try not to use markdown but simple text renderable inside a terminal. File delivery: there is no
+     attachment channel — the user reads your response directly in their terminal. Do NOT emit MEDIA:/path tags (those are o
+    nly intercepted on messaging platforms like Telegram, Discord, Slack, etc.; on the CLI they render as literal text). Whe
+    n referring to a file you created or changed, just state its absolute path in plain text; the user can open it from ther
+    e.
 
-You are a CLI AI Agent. Try not to use markdown but simple text renderable inside a terminal.
+  [user] (4 chars)
+    test
 
---- input (1 messages) ---
+  [assistant] (6 chars)
+    Hello.
+
+[timeout]: 1800.0
 
 --- tools (7 items) ---
   execute_code(code)
@@ -29,15 +41,3 @@ You are a CLI AI Agent. Try not to use markdown but simple text renderable insid
   search_files(pattern, target, path, file_glob, limit, offset, output_mode, context)
   terminal(command, background, timeout, workdir, pty, notify_on_complete, watch_patterns)
   write_file(path, content)
-
-[tool_choice]: auto
-
-[parallel_tool_calls]: True
-
-[store]: False
-
-[prompt_cache_key]: 20260415_150636_c8c6fa
-
-[reasoning]: {'effort': 'medium', 'summary': 'auto'}
-
-[include]: ['reasoning.encrypted_content']

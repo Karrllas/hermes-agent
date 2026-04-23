@@ -1,0 +1,36 @@
+2026-04-23 14:35:19,816 INFO === Pipeline run started ===
+2026-04-23 14:35:19,816 INFO Fetching accounts from Zoho...
+2026-04-23 14:35:21,501 INFO Total accounts: 54
+2026-04-23 14:35:21,501 INFO Pending (missing short or long desc): 52
+2026-04-23 14:35:21,501 INFO Capped to 1 company(-ies) for this run.
+2026-04-23 14:35:21,501 INFO [1/1] Processing: OLD LT, UAB (3604501000031286167)
+2026-04-23 14:45:01,093 WARNING No timeline section found in output for OLD LT, UAB.
+2026-04-23 14:45:01,094 INFO Report saved: OLD_LT__UAB.md
+2026-04-23 14:45:01,095 INFO results.json written with 1 entries.
+2026-04-23 14:45:01,095 INFO Uploading to Zoho CRM...
+2026-04-23 14:45:03,127 INFO === Pipeline run complete. Processed 1 companies. ===
+2026-04-23 15:58:12,776 INFO === Pipeline run started ===
+2026-04-23 15:58:12,776 INFO Fetching accounts from Zoho...
+2026-04-23 15:58:14,470 INFO Total accounts: 54
+2026-04-23 15:58:14,470 INFO Pending (missing short or long desc): 51
+2026-04-23 15:58:14,470 INFO Capped to 1 company(-ies) for this run.
+2026-04-23 15:58:14,470 INFO [1/1] Processing: HEIDELBERG MATERIALS LIETUVA CEMENTAS, UAB (3604501000000379085)
+2026-04-23 16:07:22,299 INFO Tokens — input: 902,380, output: 17,996, cache_read: 43,648
+2026-04-23 16:07:22,300 WARNING No JSON block found in agent output — falling back to raw text.
+2026-04-23 16:07:22,300 WARNING No timeline (short) found in output for HEIDELBERG MATERIALS LIETUVA CEMENTAS, UAB.
+2026-04-23 16:07:22,300 WARNING No SWOT found in output for HEIDELBERG MATERIALS LIETUVA CEMENTAS, UAB.
+2026-04-23 16:07:22,300 INFO Report saved: HEIDELBERG_MATERIALS_LIETUVA_CEMENTAS__UAB.md
+2026-04-23 16:07:22,301 INFO results.json written with 1 entries.
+2026-04-23 16:07:22,302 INFO Uploading to Zoho CRM...
+2026-04-23 16:07:24,419 INFO === Pipeline run complete. Processed 1 companies. ===
+2026-04-23 16:10:29,476 INFO === Pipeline run started ===
+2026-04-23 16:10:29,476 INFO Fetching accounts from Zoho...
+2026-04-23 16:10:31,098 INFO Total accounts: 54
+2026-04-23 16:10:31,098 INFO Pending (missing short or long desc): 51
+2026-04-23 16:10:31,098 INFO Capped to 1 company(-ies) for this run.
+2026-04-23 16:10:31,098 INFO [1/1] Processing: HEIDELBERG MATERIALS LIETUVA CEMENTAS, UAB (3604501000000379085)
+2026-04-23 16:16:30,482 INFO Tokens — input: 617,734, output: 13,160, cache_read: 36,480
+2026-04-23 16:16:30,483 INFO Report saved: HEIDELBERG_MATERIALS_LIETUVA_CEMENTAS__UAB.md
+2026-04-23 16:16:30,483 INFO results.json written with 1 entries.
+2026-04-23 16:16:30,483 INFO Uploading to Zoho CRM...
+2026-04-23 16:16:32,390 INFO === Pipeline run complete. Processed 1 companies. ===

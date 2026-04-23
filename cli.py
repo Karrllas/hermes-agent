@@ -6973,7 +6973,6 @@ class HermesCLI:
         if not self._init_agent(
             model_override=route["model"],
             runtime_override=route["runtime"],
-            route_label=route["label"],
             request_overrides=route.get("request_overrides"),
         ):
             return
@@ -7031,7 +7030,7 @@ class HermesCLI:
                 "api_mode": getattr(self.agent, "api_mode", self.api_mode),
                 "base_url": getattr(self.agent, "base_url", self.base_url),
                 "model": getattr(self.agent, "model", self.model),
-                "route_label": route.get("label"),
+                "route_label": None,
                 "preview_user_message_included": bool(preview_user_message),
                 "conversation_history_messages": len(self.conversation_history or []),
                 "request": api_kwargs,
