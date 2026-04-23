@@ -1,0 +1,43 @@
+[provider]: openai-codex
+[api_mode]: codex_responses
+[base_url]: https://chatgpt.com/backend-api/codex/
+[model]: gpt-5.4
+[route_label]: None
+[preview_user_message_included]: True
+[conversation_history_messages]: 0
+
+=== REQUEST ===
+
+[model]: gpt-5.4
+
+--- instructions (213 chars) ---
+# Hermes Agent Persona
+
+Conversation started: Wednesday, April 15, 2026 03:06 PM
+Model: gpt-5.4
+Provider: openai-codex
+
+You are a CLI AI Agent. Try not to use markdown but simple text renderable inside a terminal.
+
+--- input (1 messages) ---
+
+--- tools (7 items) ---
+  execute_code(code)
+  patch(mode, path, old_string, new_string, replace_all, patch)
+  process(action, session_id, data, timeout, offset, limit)
+  read_file(path, offset, limit)
+  search_files(pattern, target, path, file_glob, limit, offset, output_mode, context)
+  terminal(command, background, timeout, workdir, pty, notify_on_complete, watch_patterns)
+  write_file(path, content)
+
+[tool_choice]: auto
+
+[parallel_tool_calls]: True
+
+[store]: False
+
+[prompt_cache_key]: 20260415_150636_c8c6fa
+
+[reasoning]: {'effort': 'medium', 'summary': 'auto'}
+
+[include]: ['reasoning.encrypted_content']
