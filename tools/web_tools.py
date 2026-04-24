@@ -142,7 +142,7 @@ def _get_backend() -> str:
         if available:
             return backend
 
-    return "firecrawl"  # default (backward compat)
+    return "ddgs"  # default: free ddgs+jina, no API key needed
 
 
 def _is_backend_available(backend: str) -> bool:
@@ -155,7 +155,47 @@ def _is_backend_available(backend: str) -> bool:
         return check_firecrawl_api_key()
     if backend == "tavily":
         return _has_env("TAVILY_API_KEY")
+    if backend == "ddgs":
+        return True  # always available, no key needed
     return False
+
+# ─── DDGS + Jina Backend (free, no API key) ──────────────────────────────────
+
+def _ddgs_search(query: str, limit: int = 5) -> dict:
+    """Search via DuckDuckGo (ddgs lib) — no API key required."""
+    try:
+        from ddgs import DDGS
+    except ImportError:
+        return {"success": False, "error": "ddgs not installed — run: uv pip install ddgs"}
+    try:
+        with DDGS() as d:
+            raw = list(d.text(query, max_results=limit))
+        results = [
+            {"url": r["href"], "title": r["title"], "description": r["body"], "position": i + 1}
+            for i, r in enumerate(raw)
+        ]
+        return {"success": True, "data": {"web": results}}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def _jina_extract(urls: list) -> list:
+    """Extract clean markdown from URLs via Jina Reader (r.jina.ai) — free."""
+    import urllib.request as _ur
+    results = []
+    for url in urls:
+        try:
+            req = _ur.Request(
+                f"https://r.jina.ai/{url}",
+                headers={"Accept": "text/plain", "User-Agent": "Mozilla/5.0"},
+            )
+            with _ur.urlopen(req, timeout=20) as resp:
+                content = resp.read().decode("utf-8")
+            results.append({"url": url, "markdown": content, "success": True})
+        except Exception as e:
+            results.append({"url": url, "markdown": "", "success": False, "error": str(e)})
+    return results
+
 
 # ─── Firecrawl Client ────────────────────────────────────────────────────────
 
@@ -1140,6 +1180,15 @@ def web_search_tool(query: str, limit: int = 5) -> str:
             _debug.save()
             return result_json
 
+        if backend == "ddgs":
+            response_data = _ddgs_search(query, limit)
+            debug_call_data["results_count"] = len(response_data.get("data", {}).get("web", []))
+            result_json = json.dumps(response_data, indent=2, ensure_ascii=False)
+            debug_call_data["final_response_size"] = len(result_json)
+            _debug.log_call("web_search_tool", debug_call_data)
+            _debug.save()
+            return result_json
+
         if backend == "exa":
             response_data = _exa_search(query, limit)
             debug_call_data["results_count"] = len(response_data.get("data", {}).get("web", []))
@@ -1290,6 +1339,8 @@ async def web_extract_tool(
 
             if backend == "parallel":
                 results = await _parallel_extract(safe_urls)
+            elif backend == "ddgs":
+                results = _jina_extract(safe_urls)
             elif backend == "exa":
                 results = _exa_extract(safe_urls)
             elif backend == "tavily":

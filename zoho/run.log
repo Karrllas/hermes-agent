@@ -34,3 +34,39 @@
 2026-04-23 16:16:30,483 INFO results.json written with 1 entries.
 2026-04-23 16:16:30,483 INFO Uploading to Zoho CRM...
 2026-04-23 16:16:32,390 INFO === Pipeline run complete. Processed 1 companies. ===
+2026-04-23 20:40:09,353 INFO === Pipeline run started ===
+2026-04-23 20:40:09,353 INFO Fetching accounts from Zoho...
+2026-04-23 20:40:11,012 INFO Total accounts: 54
+2026-04-23 20:40:11,012 INFO Pending (missing short or long desc): 50
+2026-04-23 20:40:11,012 INFO Capped to 1 company(-ies) for this run.
+2026-04-23 20:40:11,012 INFO [1/1] Processing: BSP Asset management Klaipeda, UAB (3604501000000355046)
+2026-04-23 20:47:45,713 INFO Tokens — input: 824,860, output: 14,706, cache_read: 24,576
+2026-04-23 20:47:45,714 INFO Report saved: BSP_Asset_management_Klaipeda__UAB.md
+2026-04-23 20:47:45,715 INFO results.json written with 1 entries.
+2026-04-23 20:47:45,715 INFO Uploading to Zoho CRM...
+2026-04-23 20:47:47,808 INFO === Pipeline run complete. Processed 1 companies. ===
+2026-04-24 12:44:30,900 INFO === Pipeline run started ===
+2026-04-24 12:44:30,900 INFO Fetching accounts from Zoho...
+2026-04-24 12:44:32,582 INFO Total accounts: 54
+2026-04-24 12:44:32,582 INFO Pending (missing short or long desc): 49
+2026-04-24 12:44:32,583 INFO Capped to 1 company(-ies) for this run.
+2026-04-24 12:44:32,583 INFO [1/1] Processing: RETAL Baltic Films, UAB (3604501000000379099)
+2026-04-24 12:44:55,537 ERROR hermes exited 1: 
+session_id: 20260424_124435_a12d97
+
+2026-04-24 12:44:55,540 INFO Tokens — input: 0, output: 0, cache_read: 0
+2026-04-24 12:44:55,540 WARNING Skipping RETAL Baltic Films, UAB — hermes returned no output.
+2026-04-24 12:44:55,540 INFO No results to upload.
+2026-04-24 12:47:35,701 INFO === Pipeline run started ===
+2026-04-24 12:47:35,701 INFO Fetching accounts from Zoho...
+2026-04-24 12:47:37,226 INFO Total accounts: 54
+2026-04-24 12:47:37,226 INFO Pending (missing short or long desc): 49
+2026-04-24 12:47:37,226 INFO Capped to 1 company(-ies) for this run.
+2026-04-24 12:47:37,226 INFO [1/1] Processing: RETAL Baltic Films, UAB (3604501000000379099)
+2026-04-24 12:47:58,190 ERROR hermes exited 1: 
+session_id: 20260424_124739_e3c7fc
+API call failed after 3 retries: HTTP 429: The usage limit has been reached
+
+2026-04-24 12:47:58,191 INFO Tokens — input: 0, output: 0, cache_read: 0
+2026-04-24 12:47:58,191 WARNING Token/rate limit detected — stopping early after 0 companies.
+2026-04-24 12:47:58,191 INFO No results to upload.

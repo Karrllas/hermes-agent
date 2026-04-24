@@ -46,8 +46,8 @@ python run.py
 | `AILongDesc` | 30000 chars (full report) |
 
 
-## ToDo
 
-WebSearch tool
-SWOT
-Tokencount
+----
+Cron
+
+Prompt improvments

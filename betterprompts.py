@@ -198,7 +198,112 @@ PROMPT_BUILDER_NEW = '''\
         )'''
 
 
-# ── Patch 3: prompt_builder.py — strip /preview command from help ─────────────
+# ── Patch 3: web_tools.py — ddgs + Jina as free no-key web backend ───────────
+
+WEB_TOOLS = HERMES_AGENT / "tools" / "web_tools.py"
+
+# 3a: change default fallback from firecrawl to ddgs
+WEB_TOOLS_FALLBACK_OLD = '    return "firecrawl"  # default (backward compat)'
+WEB_TOOLS_FALLBACK_NEW = '    return "ddgs"  # default: free ddgs+jina, no API key needed'
+
+# 3b: add ddgs to _is_backend_available
+WEB_TOOLS_AVAIL_OLD = '''\
+    if backend == "tavily":
+        return _has_env("TAVILY_API_KEY")
+    return False'''
+WEB_TOOLS_AVAIL_NEW = '''\
+    if backend == "tavily":
+        return _has_env("TAVILY_API_KEY")
+    if backend == "ddgs":
+        return True  # always available, no key needed
+    return False'''
+
+# 3c: inject ddgs helper functions before Firecrawl Client section
+WEB_TOOLS_FUNCS_OLD = '# ─── Firecrawl Client ────────────────────────────────────────────────────────'
+WEB_TOOLS_FUNCS_NEW = '''\
+# ─── DDGS + Jina Backend (free, no API key) ──────────────────────────────────
+
+def _ddgs_search(query: str, limit: int = 5) -> dict:
+    """Search via DuckDuckGo (ddgs lib) — no API key required."""
+    try:
+        from ddgs import DDGS
+    except ImportError:
+        return {"success": False, "error": "ddgs not installed — run: uv pip install ddgs"}
+    try:
+        with DDGS() as d:
+            raw = list(d.text(query, max_results=limit))
+        results = [
+            {"url": r["href"], "title": r["title"], "description": r["body"], "position": i + 1}
+            for i, r in enumerate(raw)
+        ]
+        return {"success": True, "data": {"web": results}}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def _jina_extract(urls: list) -> list:
+    """Extract clean markdown from URLs via Jina Reader (r.jina.ai) — free."""
+    import urllib.request as _ur
+    results = []
+    for url in urls:
+        try:
+            req = _ur.Request(
+                f"https://r.jina.ai/{url}",
+                headers={"Accept": "text/plain", "User-Agent": "Mozilla/5.0"},
+            )
+            with _ur.urlopen(req, timeout=20) as resp:
+                content = resp.read().decode("utf-8")
+            results.append({"url": url, "markdown": content, "success": True})
+        except Exception as e:
+            results.append({"url": url, "markdown": "", "success": False, "error": str(e)})
+    return results
+
+
+# ─── Firecrawl Client ────────────────────────────────────────────────────────'''
+
+# 3d: dispatch ddgs in web_search_tool (insert before exa block)
+WEB_TOOLS_SEARCH_OLD = '''\
+        if backend == "exa":
+            response_data = _exa_search(query, limit)
+            debug_call_data["results_count"] = len(response_data.get("data", {}).get("web", []))
+            result_json = json.dumps(response_data, indent=2, ensure_ascii=False)
+            debug_call_data["final_response_size"] = len(result_json)
+            _debug.log_call("web_search_tool", debug_call_data)
+            _debug.save()
+            return result_json'''
+WEB_TOOLS_SEARCH_NEW = '''\
+        if backend == "ddgs":
+            response_data = _ddgs_search(query, limit)
+            debug_call_data["results_count"] = len(response_data.get("data", {}).get("web", []))
+            result_json = json.dumps(response_data, indent=2, ensure_ascii=False)
+            debug_call_data["final_response_size"] = len(result_json)
+            _debug.log_call("web_search_tool", debug_call_data)
+            _debug.save()
+            return result_json
+
+        if backend == "exa":
+            response_data = _exa_search(query, limit)
+            debug_call_data["results_count"] = len(response_data.get("data", {}).get("web", []))
+            result_json = json.dumps(response_data, indent=2, ensure_ascii=False)
+            debug_call_data["final_response_size"] = len(result_json)
+            _debug.log_call("web_search_tool", debug_call_data)
+            _debug.save()
+            return result_json'''
+
+# 3e: dispatch ddgs/jina in web_extract_tool (insert before exa block)
+WEB_TOOLS_EXTRACT_OLD = '''\
+            if backend == "parallel":
+                results = await _parallel_extract(safe_urls)
+            elif backend == "exa":'''
+WEB_TOOLS_EXTRACT_NEW = '''\
+            if backend == "parallel":
+                results = await _parallel_extract(safe_urls)
+            elif backend == "ddgs":
+                results = _jina_extract(safe_urls)
+            elif backend == "exa":'''
+
+
+# ── Patch 4: prompt_builder.py — strip /preview command from help ─────────────
 # (cli.py and commands.py changes are committed on my-mods branch, not patched here)
 
 
@@ -224,6 +329,11 @@ def main():
     changed = False
     changed |= patch("skill_utils.py — whitelist (_InvertedSet)", SKILL_UTILS, SKILL_UTILS_OLD, SKILL_UTILS_NEW, dry_run)
     changed |= patch("prompt_builder.py — slim skills preamble", PROMPT_BUILDER, PROMPT_BUILDER_OLD, PROMPT_BUILDER_NEW, dry_run)
+    changed |= patch("web_tools.py — ddgs fallback default", WEB_TOOLS, WEB_TOOLS_FALLBACK_OLD, WEB_TOOLS_FALLBACK_NEW, dry_run)
+    changed |= patch("web_tools.py — ddgs _is_backend_available", WEB_TOOLS, WEB_TOOLS_AVAIL_OLD, WEB_TOOLS_AVAIL_NEW, dry_run)
+    changed |= patch("web_tools.py — ddgs+jina helper functions", WEB_TOOLS, WEB_TOOLS_FUNCS_OLD, WEB_TOOLS_FUNCS_NEW, dry_run)
+    changed |= patch("web_tools.py — ddgs dispatch in web_search_tool", WEB_TOOLS, WEB_TOOLS_SEARCH_OLD, WEB_TOOLS_SEARCH_NEW, dry_run)
+    changed |= patch("web_tools.py — jina dispatch in web_extract_tool", WEB_TOOLS, WEB_TOOLS_EXTRACT_OLD, WEB_TOOLS_EXTRACT_NEW, dry_run)
 
     print()
     if not dry_run:

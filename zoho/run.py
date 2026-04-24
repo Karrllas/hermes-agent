@@ -13,6 +13,7 @@ Flow:
   3. upload.py → push results to Zoho CRM
 """
 
+import argparse
 import json
 import logging
 import os
@@ -23,11 +24,6 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-
-# ── Config ────────────────────────────────────────────────────────────────────
-
-# Max companies to process per run. Set to None for no limit (production).
-MAX_COMPANIES: int | None = 1
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
@@ -116,11 +112,11 @@ def run_hermes(prompt_text: str) -> tuple[str | None, bool]:
             capture_output=True,
             text=True,
         )
-        stderr_lower = result.stderr.lower()
-        token_limited = any(sig in stderr_lower for sig in _LIMIT_SIGNALS)
+        combined_lower = (result.stderr + result.stdout).lower()
+        token_limited = any(sig in combined_lower for sig in _LIMIT_SIGNALS)
 
         if result.returncode != 0:
-            log.error("hermes exited %d: %s", result.returncode, result.stderr[:500])
+            log.error("hermes exited %d: %s", result.returncode, (result.stderr + result.stdout)[:500])
             return None, token_limited
         return result.stdout.strip(), token_limited
     finally:
@@ -177,6 +173,11 @@ def parse_agent_output(raw: str) -> dict:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Zoho CRM research pipeline")
+    parser.add_argument("-n", "--companies", type=int, default=None,
+                        metavar="N", help="Max companies to process (default: all pending)")
+    args = parser.parse_args()
+
     log.info("=== Pipeline run started ===")
 
     # Step 1: Fetch accounts
@@ -193,9 +194,9 @@ def main() -> None:
     pending = [a for a in accounts if not (a["AIShortDesc"] and a["AILongDesc"])]
     log.info("Pending (missing short or long desc): %d", len(pending))
 
-    if MAX_COMPANIES is not None:
-        pending = pending[:MAX_COMPANIES]
-        log.info("Capped to %d company(-ies) for this run.", MAX_COMPANIES)
+    if args.companies is not None:
+        pending = pending[:args.companies]
+        log.info("Capped to %d company(-ies) for this run.", args.companies)
 
     if not pending:
         log.info("Nothing to process. Exiting.")
