@@ -148,10 +148,17 @@ def parse_agent_output(raw: str) -> dict:
     Returns dict with keys: short, long, swot, log.
     Falls back gracefully if JSON is absent or malformed.
     """
-    # Agent outputs only raw JSON — strip hermes noise then parse directly
+    # Agent outputs JSON — strip hermes noise, then find the JSON block even if
+    # security scanner warnings or other hermes output precede it in stdout.
     try:
         cleaned = re.sub(r"\nsession_id:.*$", "", raw, flags=re.MULTILINE).strip()
-        data = json.loads(cleaned)
+        try:
+            data = json.loads(cleaned)
+        except Exception:
+            m = re.search(r'(\{"short"\s*:)', cleaned)
+            if not m:
+                raise
+            data = json.loads(cleaned[m.start():])
         short = str(data.get("short", "")).strip()
         if len(short) > 2000:
             short = short[:1997] + "..."

@@ -1,0 +1,8 @@
+.env
+accounts.json
+results.json
+run.log
+process.log
+cron.log
+JOBLOG.md
+reports/
