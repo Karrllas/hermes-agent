@@ -80,23 +80,11 @@ def build_prompt(company_name: str) -> str:
     return template.replace("{{COMPANY_NAME}}", company_name)
 
 
-# Phrases in hermes stderr that indicate a token/rate limit was hit
-_LIMIT_SIGNALS = (
-    "rate limit",
-    "token limit",
-    "context length",
-    "max_tokens",
-    "429",
-    "insufficient_quota",
-    "context window",
-)
-
-
 def run_hermes(prompt_text: str) -> tuple[str | None, bool]:
     """Run hermes with the given prompt.
 
-    Returns (output, token_limited).
-    output is None on error. token_limited=True means stop processing.
+    Returns (output, failed).
+    output is None on error. failed=True means stop processing.
     """
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".md", delete=False, encoding="utf-8"
@@ -112,13 +100,10 @@ def run_hermes(prompt_text: str) -> tuple[str | None, bool]:
             capture_output=True,
             text=True,
         )
-        combined_lower = (result.stderr + result.stdout).lower()
-        token_limited = any(sig in combined_lower for sig in _LIMIT_SIGNALS)
-
         if result.returncode != 0:
             log.error("hermes exited %d: %s", result.returncode, (result.stderr + result.stdout)[:500])
-            return None, token_limited
-        return result.stdout.strip(), token_limited
+            return None, True
+        return result.stdout.strip(), False
     finally:
         os.unlink(tmp_path)
 
@@ -217,15 +202,15 @@ def main() -> None:
         log.info("[%d/%d] Processing: %s (%s)", idx, len(pending), name, acct_id)
 
         prompt = build_prompt(name)
-        report, token_limited = run_hermes(prompt)
+        report, failed = run_hermes(prompt)
 
         tokens = get_last_session_tokens()
         if tokens:
             log.info("Tokens — input: %s, output: %s, cache_read: %s",
                      f"{tokens['input']:,}", f"{tokens['output']:,}", f"{tokens['cache_read']:,}")
 
-        if token_limited:
-            log.warning("Token/rate limit detected — stopping early after %d companies.", len(results))
+        if failed:
+            log.warning("hermes failed — stopping early after %d companies.", len(results))
             break
 
         if report is None:
