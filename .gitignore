@@ -43,6 +43,14 @@ hermes_agent.egg-info/
 wandb/
 testlogs
 
+# Local fork run artifacts
+/JOBLOG.md
+/hermes_preview.json
+/hermes_preview.txt
+/output.md
+/output2.md
+/run.log
+
 # CLI config (may contain sensitive SSH paths)
 cli-config.yaml
 

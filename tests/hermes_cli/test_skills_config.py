@@ -243,6 +243,45 @@ class TestGetDisabledSkillNames:
         result = get_disabled_skill_names()
         assert result == {"global-skill"}
 
+    def test_global_whitelist_disables_everything_else(self, tmp_path, monkeypatch):
+        """skills.enabled should behave as a global allowlist."""
+        config = tmp_path / "config.yaml"
+        config.write_text(
+            "skills:\n"
+            "  enabled:\n"
+            "    - allowed-skill\n"
+            "  disabled:\n"
+            "    - ignored-in-whitelist-mode\n"
+        )
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.delenv("HERMES_PLATFORM", raising=False)
+        monkeypatch.delenv("HERMES_SESSION_PLATFORM", raising=False)
+
+        from agent.skill_utils import get_disabled_skill_names
+        result = get_disabled_skill_names()
+        assert "blocked-skill" in result
+        assert "allowed-skill" not in result
+
+    def test_platform_whitelist_overrides_global_whitelist(self, tmp_path, monkeypatch):
+        """skills.platform_enabled should win for the resolved platform."""
+        config = tmp_path / "config.yaml"
+        config.write_text(
+            "skills:\n"
+            "  enabled:\n"
+            "    - global-skill\n"
+            "  platform_enabled:\n"
+            "    telegram:\n"
+            "      - telegram-skill\n"
+        )
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.delenv("HERMES_PLATFORM", raising=False)
+        monkeypatch.delenv("HERMES_SESSION_PLATFORM", raising=False)
+
+        from agent.skill_utils import get_disabled_skill_names
+        result = get_disabled_skill_names(platform="telegram")
+        assert "global-skill" in result
+        assert "telegram-skill" not in result
+
 
 # ---------------------------------------------------------------------------
 # _find_all_skills — disabled filtering

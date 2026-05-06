@@ -7048,32 +7048,6 @@ class HermesCLI:
         except Exception as e:
             ChatConsole().print(f"[bold red]Preview failed: {e}[/]")
 
-    def _handle_plan_command(self, cmd: str):
-        """Handle /plan [request] — load the bundled plan skill."""
-        parts = cmd.strip().split(maxsplit=1)
-        user_instruction = parts[1].strip() if len(parts) > 1 else ""
-
-        plan_path = build_plan_path(user_instruction)
-        msg = build_skill_invocation_message(
-            "/plan",
-            user_instruction,
-            task_id=self.session_id,
-            runtime_note=(
-                "Save the markdown plan with write_file to this exact relative path "
-                f"inside the active workspace/backend cwd: {plan_path}"
-            ),
-        )
-
-        if not msg:
-            ChatConsole().print("[bold red]Failed to load the bundled /plan skill[/]")
-            return
-
-        _cprint(f"  📝 Plan mode queued via skill. Markdown plan target: {plan_path}")
-        if hasattr(self, '_pending_input'):
-            self._pending_input.put(msg)
-        else:
-            ChatConsole().print("[bold red]Plan mode unavailable: input queue not initialized[/]")
-
     def _handle_background_command(self, cmd: str):
         """Handle /background <prompt> — run a prompt in a separate background session.
 
