@@ -33,6 +33,7 @@ LOG_FILE      = BASE_DIR / "run.log"
 RESULTS_JSON  = BASE_DIR / "results.json"
 ACCOUNTS_JSON = BASE_DIR / "accounts.json"
 PROMPT_TPL    = BASE_DIR / "prompt.md"
+HERMES_PROFILE = os.getenv("HERMES_WORKFLOW_PROFILE", "workflow-runner").strip()
 
 REPORTS_DIR.mkdir(exist_ok=True)
 
@@ -93,8 +94,9 @@ def run_hermes(prompt_text: str) -> tuple[str | None, bool]:
         tmp_path = f.name
 
     try:
+        profile_args = f"-p {HERMES_PROFILE} " if HERMES_PROFILE else ""
         result = subprocess.run(
-            f"hermes chat -q \"$(cat '{tmp_path}')\" -Q",
+            f"hermes {profile_args}chat -q \"$(cat '{tmp_path}')\" -Q",
             shell=True,
             stdin=subprocess.DEVNULL,
             capture_output=True,
